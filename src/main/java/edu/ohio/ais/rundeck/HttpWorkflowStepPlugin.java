@@ -23,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -42,6 +44,8 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import com.google.gson.Gson;
 import org.dom4j.DocumentHelper;
 import org.dom4j.io.OutputFormat;
@@ -107,7 +111,7 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
                     .required(true)
                     .build())
                 .property(PropertyBuilder.builder()
-                    .string("requestParameter")
+                    .string("requestParam")
                     .title("Request Parameters")
                     .description("URL Query Parameters")
                     .required(false)
@@ -121,17 +125,17 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
                     .values(HTTP_METHODS)
                     .build())
                 .property(PropertyBuilder.builder()
-                        .string("headers")
-                        .title("Headers")
-                        .description("Add headers in json or yaml format.")
-                        .renderingAsTextarea()
-                        .build())
+                    .string("headers")
+                    .title("Headers")
+                    .description("Add headers in json or yaml format.")
+                    .renderingAsTextarea()
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .string("body")
-                        .title("Body")
-                        .description("Add Body.")
-                        .renderingAsTextarea()
-                        .build())
+                    .string("body")
+                    .title("Body")
+                    .description("Add Body.")
+                    .renderingAsTextarea()
+                    .build())
                 .property(PropertyBuilder.builder()
                     .integer("timeout")
                     .title("Request Timeout")
@@ -145,14 +149,14 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
                     .defaultValue("true")
                     .build())
                 .property(PropertyBuilder.builder()
-                        .select("authentication")
-                        .title("Authentication")
-                        .description("Authentication mechanism to use.")
-                        .required(false)
-                        .defaultValue(AUTH_NONE)
-                        .values(AUTH_NONE, AUTH_BASIC, AUTH_OAUTH2)
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Authentication")
-                        .build())
+                    .select("authentication")
+                    .title("Authentication")
+                    .description("Authentication mechanism to use.")
+                    .required(false)
+                    .defaultValue(AUTH_NONE)
+                    .values(AUTH_NONE, AUTH_BASIC, AUTH_OAUTH2)
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Authentication")
+                    .build())
                 .property(PropertyBuilder.builder()
                     .string("username")
                     .title("Username/Client ID")
@@ -186,61 +190,61 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
                     .renderingOption(StringRenderingConstants.GROUP_NAME,"Authentication")
                     .build())
                 .property(PropertyBuilder.builder()
-                        .booleanType("checkResponseCode")
-                        .title("Check Response Code?")
-                        .description("Set if you want to check response code.")
-                        .defaultValue("false")
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Check Response")
-                        .build())
+                    .booleanType("checkResponseCode")
+                    .title("Check Response Code?")
+                    .description("Set if you want to check response code.")
+                    .defaultValue("false")
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Check Response")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .string("responseCode")
-                        .title("Response Code")
-                        .description("Response Code expected, the step will fail if the response code is different.")
-                        .required(false)
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Check Response")
-                        .build())
+                    .string("responseCode")
+                    .title("Response Code")
+                    .description("Response Code expected, the step will fail if the response code is different.")
+                    .required(false)
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Check Response")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .booleanType("printResponse")
-                        .title("Print Response?")
-                        .description("Set if the response needs to be printed.")
-                        .defaultValue("false")
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
-                        .build())
+                    .booleanType("printResponse")
+                    .title("Print Response?")
+                    .description("Set if the response needs to be printed.")
+                    .defaultValue("false")
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .booleanType("printResponseToFile")
-                        .title("Print Response to File?")
-                        .description("Set if you want to print the response content to a file.")
-                        .defaultValue("false")
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
-                        .build())
+                    .booleanType("printResponseToFile")
+                    .title("Print Response to File?")
+                    .description("Set if you want to print the response content to a file.")
+                    .defaultValue("false")
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .string("file")
-                        .title("File Path")
-                        .description("File path where you will write the response.")
-                        .required(false)
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
-                        .build())
+                    .string("file")
+                    .title("File Path")
+                    .description("File path where you will write the response.")
+                    .required(false)
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Print")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .booleanType("proxySettings")
-                        .title("Use Proxy Settings?")
-                        .description("Set if you want to use a proxy.")
-                        .defaultValue("false")
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
-                        .build())
+                    .booleanType("proxySettings")
+                    .title("Use Proxy Settings?")
+                    .description("Set if you want to use a proxy.")
+                    .defaultValue("false")
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .string("proxyIP")
-                        .title("Proxy IP")
-                        .description("Proxy to use for this request")
-                        .required(false)
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
-                        .build())
+                    .string("proxyIP")
+                    .title("Proxy IP")
+                    .description("Proxy to use for this request")
+                    .required(false)
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
+                    .build())
                 .property(PropertyBuilder.builder()
-                        .integer("proxyPort")
-                        .title("Proxy Port")
-                        .description("Proxy port to use for this request")
-                        .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
-                        .required(false)
-                        .build())
+                    .integer("proxyPort")
+                    .title("Proxy Port")
+                    .description("Proxy port to use for this request")
+                    .renderingOption(StringRenderingConstants.GROUP_NAME,"Proxy Settings")
+                    .required(false)
+                    .build())
                 .build();
     }
 
@@ -401,6 +405,7 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
 
         // Parse out the options
         String remoteUrl = options.containsKey("remoteUrl") ? options.get("remoteUrl").toString() : null;
+        String requestParam = options.containsKey("requestParam") ? options.get("requestParam").toString() : null;
         String method = options.containsKey("method") ? options.get("method").toString() : null;
         String authentication = options.containsKey("authentication") ? options.get("authentication").toString() : AUTH_NONE;
         Integer timeout = options.containsKey("timeout") ? Integer.parseInt(options.get("timeout").toString()) : DEFAULT_TIMEOUT;
@@ -515,10 +520,9 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
         }
 
         // Setup the request and process it.
-        RequestBuilder request = RequestBuilder.create(method)
-                .setUri(remoteUrl)
-                .addParameter(requestParam)
-                .setConfig(RequestConfig.custom()
+        RequestBuilder request = RequestBuilder.create(method);
+        request.setUri(remoteUrl);        
+        request.setConfig(RequestConfig.custom()
                         .setConnectionRequestTimeout(timeout)
                         .setConnectTimeout(timeout)
                         .setSocketTimeout(timeout)
@@ -567,6 +571,21 @@ public class HttpWorkflowStepPlugin implements StepPlugin, Describable {
                     request.setHeader(key, value);
                 }
             }
+        }
+
+        if(null != requestParam) {
+            // List<NameValuePair> requestNVPs = new ArrayList<NameValuePair>();
+            String[] requestParamArray = requestParam.split("&");
+            for (String requestParamPair : requestParamArray) {
+                String[] requestPair = requestParamPair.split("=");
+                if (requestPair.length == 1) {
+                    request.addParameter(new BasicNameValuePair(requestPair[0],""));
+                } else {
+                    request.addParameter(new BasicNameValuePair(requestPair[0],requestPair[1]));
+                }
+                
+            }            
+            // request.addParameters(requestNVPs.toArray(new NameValuePair[requestNVPs.size()]));
         }
 
         //send body
